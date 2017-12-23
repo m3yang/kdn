@@ -2,8 +2,7 @@
 
 namespace FastFood;
 
-use FastFood\Param\Receiver;
-use FastFood\Param\Sender;
+use FastFood\Param\Address;
 
 class EOrder
 {
@@ -117,17 +116,17 @@ class EOrder
     }
 
     /**
-     * @param Sender $sender
+     * @param Address $sender
      * @return EOrder
      */
-    public function setSender(Sender $sender)
+    public function setSender(Address $sender)
     {
         $this->sender = $sender;
         return $this;
     }
 
     /**
-     * @return mixed
+     * @return Address
      */
     public function getSender()
     {
@@ -135,17 +134,17 @@ class EOrder
     }
 
     /**
-     * @param Receiver $receiver
+     * @param Address $receiver
      * @return EOrder
      */
-    public function setReceiver(Receiver $receiver)
+    public function setReceiver(Address $receiver)
     {
         $this->receiver = $receiver;
         return $this;
     }
 
     /**
-     * @return mixed
+     * @return Address
      */
     public function getReceiver()
     {
@@ -170,19 +169,29 @@ class EOrder
 
     public function submit()
     {
-        $request_data =
+        $request_data = $this->getRequestData();
+        echo $request_data;exit;
         $datas = array(
             'EBusinessID' => $this->e_business_id,
             'RequestType' => '1007',
-            //'RequestData' =>
+            'RequestData' => $request_data,
+            'DataType' => 2,
         );
+        $datas['DataSign'] = encrypt($request_data, $this->app_key);
+
     }
 
     protected function getRequestData()
     {
         $arr = [
-            'ShipperCode' => $this->get
+            'ShipperCode' => $this->getShipperCode(),
+            'OrderCode' => $this->getOrderCode(),
+            'PayType' => $this->getPayType(),
+            'ExpType' => $this->getExpType(),
+            'Sender' => $this->getSender(),
+            'Receiver' => $this->getReceiver(),
+            'Commodity' => $this->getCommodity(),
         ];
+        return json_encode($arr, JSON_UNESCAPED_UNICODE);
     }
-
 }

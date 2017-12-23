@@ -2,7 +2,9 @@
 
 namespace FastFood\Param;
 
-class Sender
+use JsonSerializable;
+
+class Address implements JsonSerializable
 {
     protected $name;
     protected $mobile;
@@ -21,7 +23,7 @@ class Sender
 
     /**
      * @param mixed $name
-     * @return Sender
+     * @return Address
      */
     public function setName($name)
     {
@@ -39,7 +41,7 @@ class Sender
 
     /**
      * @param mixed $mobile
-     * @return Sender
+     * @return Address
      */
     public function setMobile($mobile)
     {
@@ -57,7 +59,7 @@ class Sender
 
     /**
      * @param mixed $province_name
-     * @return Sender
+     * @return Address
      */
     public function setProvinceName($province_name)
     {
@@ -75,7 +77,7 @@ class Sender
 
     /**
      * @param mixed $city_name
-     * @return Sender
+     * @return Address
      */
     public function setCityName($city_name)
     {
@@ -93,7 +95,7 @@ class Sender
 
     /**
      * @param mixed $exp_area_name
-     * @return Sender
+     * @return Address
      */
     public function setExpAreaName($exp_area_name)
     {
@@ -111,11 +113,28 @@ class Sender
 
     /**
      * @param mixed $address
-     * @return Sender
+     * @return Address
      */
     public function setAddress($address)
     {
         $this->address = $address;
         return $this;
+    }
+
+    /**
+     * @return array|mixed
+     */
+    public function jsonSerialize()
+    {
+        $arr = [];
+        $arr['Name'] = $this->getName();
+        $arr['Mobile'] = $this->getMobile();
+        $arr['ProvinceName'] = $this->getProvinceName();
+        $arr['CityName'] = $this->getCityName();
+        if (!empty($this->getExpAreaName())) {
+            $arr['ExpAreaName'] = $this->getExpAreaName();
+        }
+        $arr['Address'] = $this->getAddress();
+        return $arr;
     }
 }
