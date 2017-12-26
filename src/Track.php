@@ -2,7 +2,7 @@
 
 namespace FastFood;
 
-class Track
+class Track extends Core
 {
     const API_PRODUCTION = 'http://api.kdniao.cc/Ebusiness/EbusinessOrderHandle.aspx';
 
@@ -73,6 +73,30 @@ class Track
     
     public function query()
     {
-        
+        $request_data = $this->formatRequestData();
+        $datas = array(
+            'EBusinessID' => $this->e_business_id,
+            'RequestType' => '1002',
+            'RequestData' => urlencode($request_data),
+            'DataType' => 2,
+        );
+        $datas['DataSign'] = encrypt($requestData, AppKey);
+        $result=sendPost(ReqURL, $datas);
+
+        //根据公司业务处理返回的信息......
+
+        return $result;
+    }
+
+    protected function formatRequestData()
+    {
+        $arr = [
+            'ShipperCode' => $this->getShipperCode(),
+            'LogisticCode' => $this->getLogisticCode(),
+        ];
+        if (!empty($this->getOrderCode())) {
+            $arr['OrderCode'] = $this->getOrderCode();
+        }
+        return json_encode($arr, JSON_UNESCAPED_UNICODE);
     }
 }

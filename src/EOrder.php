@@ -296,16 +296,4 @@ class EOrder extends Core
 
         return $gets;
     }
-
-    /**
-     * 电商Sign签名生成
-     *
-     * @param data 内容
-     * @param appkey Appkey
-     * @return DataSign签名
-     */
-    protected function encrypt($data, $appkey)
-    {
-        return urlencode(base64_encode(md5($data . $appkey)));
-    }
 }
