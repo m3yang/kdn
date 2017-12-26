@@ -14,7 +14,7 @@ class EOrder
 
     protected $e_business_id;
     protected $app_key;
-    protected $use_api;
+    protected $e_order_api;
 
     protected $shipper_code;
     protected $order_code;
@@ -24,22 +24,24 @@ class EOrder
     protected $receiver;
     protected $commodity;
 
+    protected $result;
+
     public function __construct($e_business_id, $app_key)
     {
         $this->e_business_id = $e_business_id;
         $this->app_key = $app_key;
-        $this->use_api = self::API_PRODUCTION;
+        $this->e_order_api = self::API_PRODUCTION;
     }
 
     public function useTestingApi()
     {
-        $this->use_api = self::API_TESTING;
+        $this->e_order_api = self::API_TESTING;
         return $this;
     }
 
     public function useProductionApi()
     {
-        $this->use_api = self::API_PRODUCTION;
+        $this->e_order_api = self::API_PRODUCTION;
         return $this;
     }
 
@@ -170,15 +172,18 @@ class EOrder
     public function submit()
     {
         $request_data = $this->getRequestData();
-        echo $request_data;exit;
         $datas = array(
             'EBusinessID' => $this->e_business_id,
             'RequestType' => '1007',
-            'RequestData' => $request_data,
+            'RequestData' => urlencode($request_data),
             'DataType' => 2,
         );
-        $datas['DataSign'] = encrypt($request_data, $this->app_key);
+        $datas['DataSign'] = $this->encrypt($request_data, $this->app_key);
+        $this->result = $this->sendPost($this->e_order_api, $datas);
+        $this->result = json_decode($this->result, true);
+        if (json_last_error())
 
+        return $result;
     }
 
     protected function getRequestData()
@@ -188,10 +193,62 @@ class EOrder
             'OrderCode' => $this->getOrderCode(),
             'PayType' => $this->getPayType(),
             'ExpType' => $this->getExpType(),
+
             'Sender' => $this->getSender(),
             'Receiver' => $this->getReceiver(),
             'Commodity' => $this->getCommodity(),
         ];
         return json_encode($arr, JSON_UNESCAPED_UNICODE);
+    }
+
+    /**
+     *  post提交数据
+     * @param  string $url 请求Url
+     * @param  array $datas 提交的数据
+     * @return url响应返回的html
+     */
+    protected function sendPost($url, $datas)
+    {
+        $temps = array();
+        foreach ($datas as $key => $value) {
+            $temps[] = sprintf('%s=%s', $key, $value);
+        }
+        $post_data = implode('&', $temps);
+        $url_info = parse_url($url);
+        if (empty($url_info['port'])) {
+            $url_info['port'] = 80;
+        }
+        $httpheader = "POST " . $url_info['path'] . " HTTP/1.0\r\n";
+        $httpheader .= "Host:" . $url_info['host'] . "\r\n";
+        $httpheader .= "Content-Type:application/x-www-form-urlencoded\r\n";
+        $httpheader .= "Content-Length:" . strlen($post_data) . "\r\n";
+        $httpheader .= "Connection:close\r\n\r\n";
+        $httpheader .= $post_data;
+        $fd = fsockopen($url_info['host'], $url_info['port']);
+        fwrite($fd, $httpheader);
+        $gets = "";
+        $headerFlag = true;
+        while (!feof($fd)) {
+            if (($header = @fgets($fd)) && ($header == "\r\n" || $header == "\n")) {
+                break;
+            }
+        }
+        while (!feof($fd)) {
+            $gets .= fread($fd, 128);
+        }
+        fclose($fd);
+
+        return $gets;
+    }
+
+    /**
+     * 电商Sign签名生成
+     * @param data 内容
+     * @param appkey Appkey
+     * @return DataSign签名
+     */
+    protected function encrypt($data, $appkey)
+    {
+        return urlencode(base64_encode(md5($data . $appkey)));
     }
 }
