@@ -11,20 +11,23 @@ use FastFood\Param\Address;
  *
  * @package FastFood
  */
-class EOrder
+class EOrder extends Core
 {
-    const API_PRODUCTION = 'http://api.kdniao.cc/api/Eorderservice';
-    const API_TESTING = 'http://testapi.kdniao.cc:8081/api/EOrderService';
-
     const PAY_TYPE_CASH = 1; //1-现付
     const EXP_TYPE_STANDARD = 1; //1-标准快件
 
-    protected $e_business_id;
-    protected $app_key;
-    protected $e_order_api;
+    const API_PRODUCTION = 'http://api.kdniao.cc/api/Eorderservice';
+    const API_TESTING = 'http://testapi.kdniao.cc:8081/api/EOrderService';
 
-    protected $shipper_code;
+    /**
+     * 使用的api
+     *
+     * @var string
+     */
+    protected $api_e_order = self::API_PRODUCTION;
+
     protected $order_code;
+    protected $shipper_code;
     protected $pay_type;
     protected $exp_type;
     protected $sender;
@@ -41,13 +44,6 @@ class EOrder
      */
     protected $response_body;
 
-    public function __construct($e_business_id, $app_key)
-    {
-        $this->e_business_id = $e_business_id;
-        $this->app_key = $app_key;
-        $this->e_order_api = self::API_PRODUCTION;
-    }
-
     /**
      * 使用测试接口
      *
@@ -55,7 +51,7 @@ class EOrder
      */
     public function useTestingApi()
     {
-        $this->e_order_api = self::API_TESTING;
+        $this->api_e_order = self::API_TESTING;
         return $this;
     }
 
@@ -66,26 +62,8 @@ class EOrder
      */
     public function useProductionApi()
     {
-        $this->e_order_api = self::API_PRODUCTION;
+        $this->api_e_order = self::API_PRODUCTION;
         return $this;
-    }
-
-    /**
-     * @param mixed $shipper_code
-     * @return EOrder
-     */
-    public function setShipperCode($shipper_code)
-    {
-        $this->shipper_code = $shipper_code;
-        return $this;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getShipperCode()
-    {
-        return $this->shipper_code;
     }
 
     /**
@@ -104,6 +82,24 @@ class EOrder
     public function getOrderCode()
     {
         return $this->order_code;
+    }
+
+    /**
+     * @param mixed $shipper_code
+     * @return EOrder
+     */
+    public function setShipperCode($shipper_code)
+    {
+        $this->shipper_code = $shipper_code;
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getShipperCode()
+    {
+        return $this->shipper_code;
     }
 
     /**
@@ -210,7 +206,7 @@ class EOrder
             'DataType' => 2,
         );
         $datas['DataSign'] = $this->encrypt($request_data, $this->app_key);
-        $response_body = $this->sendPost($this->e_order_api, $datas);
+        $response_body = $this->sendPost($this->api_e_order, $datas);
         $result = json_decode($response_body, true);
         if (json_last_error() !== JSON_ERROR_NONE) {
             throw new KdnException(json_last_error_msg());
