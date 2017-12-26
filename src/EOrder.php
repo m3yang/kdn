@@ -4,6 +4,13 @@ namespace FastFood;
 
 use FastFood\Param\Address;
 
+/**
+ * Class EOrder
+ *
+ * @see http://www.kdniao.com/api-eorder
+ *
+ * @package FastFood
+ */
 class EOrder
 {
     const API_PRODUCTION = 'http://api.kdniao.cc/api/Eorderservice';
@@ -24,7 +31,15 @@ class EOrder
     protected $receiver;
     protected $commodity;
 
-    protected $result;
+    /**
+     * @var string 请求参数 json_encode处理的数据
+     */
+    protected $request_data;
+
+    /**
+     * @var string （未经处理的）返回结果
+     */
+    protected $response_body;
 
     public function __construct($e_business_id, $app_key)
     {
@@ -33,12 +48,22 @@ class EOrder
         $this->e_order_api = self::API_PRODUCTION;
     }
 
+    /**
+     * 使用测试接口
+     *
+     * @return $this
+     */
     public function useTestingApi()
     {
         $this->e_order_api = self::API_TESTING;
         return $this;
     }
 
+    /**
+     * 使用生产接口
+     *
+     * @return $this
+     */
     public function useProductionApi()
     {
         $this->e_order_api = self::API_PRODUCTION;
@@ -169,9 +194,15 @@ class EOrder
         return $this->commodity;
     }
 
+    /**
+     * 提交电子面单
+     *
+     * @return array
+     * @throws KdnException
+     */
     public function submit()
     {
-        $request_data = $this->getRequestData();
+        $request_data = $this->formatRequestData();
         $datas = array(
             'EBusinessID' => $this->e_business_id,
             'RequestType' => '1007',
@@ -179,14 +210,42 @@ class EOrder
             'DataType' => 2,
         );
         $datas['DataSign'] = $this->encrypt($request_data, $this->app_key);
-        $this->result = $this->sendPost($this->e_order_api, $datas);
-        $this->result = json_decode($this->result, true);
-        if (json_last_error())
-
+        $response_body = $this->sendPost($this->e_order_api, $datas);
+        $result = json_decode($response_body, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new KdnException(json_last_error_msg());
+        }
+        $this->request_data = $request_data;
+        $this->response_body = $response_body;
         return $result;
     }
 
-    protected function getRequestData()
+    /**
+     * 获取请求数据
+     *
+     * @return string
+     */
+    public function getRequestData()
+    {
+        return $this->request_data;
+    }
+
+    /**
+     * 获取未加工处理的返回
+     *
+     * @return string
+     */
+    public function getResponseBody()
+    {
+        return $this->response_body;
+    }
+
+    /**
+     * 获取设置好的参数
+     *
+     * @return string
+     */
+    protected function formatRequestData()
     {
         $arr = [
             'ShipperCode' => $this->getShipperCode(),
@@ -202,9 +261,10 @@ class EOrder
     }
 
     /**
-     *  post提交数据
-     * @param  string $url 请求Url
-     * @param  array $datas 提交的数据
+     * post提交数据
+     *
+     * @param string $url 请求Url
+     * @param array $datas 提交的数据
      * @return url响应返回的html
      */
     protected function sendPost($url, $datas)
@@ -243,6 +303,7 @@ class EOrder
 
     /**
      * 电商Sign签名生成
+     *
      * @param data 内容
      * @param appkey Appkey
      * @return DataSign签名
