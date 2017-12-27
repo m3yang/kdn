@@ -18,6 +18,16 @@ class Track extends Core
     protected $logistic_code;
 
     /**
+     * @var string 请求参数 json_encode处理的数据
+     */
+    protected $request_data;
+
+    /**
+     * @var string （未经处理的）返回结果
+     */
+    protected $response_body;
+
+    /**
      * @return string
      */
     public function getOrderCode()
@@ -80,11 +90,14 @@ class Track extends Core
             'RequestData' => urlencode($request_data),
             'DataType' => 2,
         );
-        $datas['DataSign'] = encrypt($requestData, AppKey);
-        $result=sendPost(ReqURL, $datas);
-
-        //根据公司业务处理返回的信息......
-
+        $datas['DataSign'] = $this->encrypt($request_data, $this->app_key);
+        $response_body = $this->sendPost($this->api_track, $datas);
+        $result = json_decode($response_body, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new KdnException(json_last_error_msg());
+        }
+        $this->request_data = $request_data;
+        $this->response_body = $response_body;
         return $result;
     }
 
