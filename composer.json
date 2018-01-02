@@ -9,7 +9,7 @@
   },
   "autoload": {
     "psr-4": {
-      "FastFood\\": "src/"
+      "FastFood\\Kdn\\": "src/"
     }
   }
 }
