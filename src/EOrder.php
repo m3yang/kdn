@@ -1,8 +1,8 @@
 <?php
 
-namespace FastFood;
+namespace FastFood\Kdn;
 
-use FastFood\Param\Address;
+use FastFood\Kdn\Param\Address;
 
 /**
  * Class EOrder

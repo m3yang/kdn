@@ -1,6 +1,6 @@
 <?php
 
-namespace FastFood\Param;
+namespace FastFood\Kdn\Param;
 
 use JsonSerializable;
 
